@@ -46,7 +46,7 @@
     <canvas id="gameCanvas" width="800" height="400"></canvas>
     <div id="startScreen">
         <h1>Klicke auf den Bildschirm, um zu starten.</h1>
-        <p>Mit jedem Klick überspringst du ein Hindernis.</p>
+        <p>Mit jedem Klick umdribbelst du einen Gegenspieler.</p>
     </div>
     <div id="gameOver" style="display: none;">
         <h1>Game Over</h1>
@@ -65,7 +65,8 @@
         let player = {
             x: 50,
             y: canvasHeight - 100,
-            radius: 30,
+            width: 50,
+            height: 100,
             color: "#AFCD98",
             dy: 0,
             gravity: 1,
@@ -75,32 +76,29 @@
 
         let obstacles = [];
         let obstacleWidth = 50;
-        let obstacleHeight = 150; // Höheres Hindernis für bessere Tor-Form
+        let obstacleHeight = 80; // Höhe der Gegenspieler
         let obstacleColor = "#FFFFFF";
         let obstacleSpeed = 5;
         let gameStarted = false;
         let points = 0;
         let gameOver = false;
 
-        function drawGoal(x, y, width, height) {
-            // Torpfosten
+        function drawOpponent(x, y, width, height) {
+            // Kopf
+            ctx.fillStyle = "#FFFFFF";
+            ctx.beginPath();
+            ctx.arc(x + width / 2, y + height / 4, height / 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Körper
             ctx.fillStyle = obstacleColor;
-            ctx.fillRect(x, y, width, height);
-            ctx.strokeRect(x, y, width, height);
+            ctx.fillRect(x, y + height / 4, width, height * 3 / 4);
 
-            // Torlatte
-            ctx.fillRect(x - 10, y, width + 20, 10);
-            ctx.strokeRect(x - 10, y, width + 20, 10);
+            // Arme
+            ctx.fillRect(x - width / 4, y + height / 4, width / 2, height / 2);
 
-            // Netz (engmaschiger und transparenter)
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-            ctx.lineWidth = 2;
-            for (let i = x + 10; i < x + width - 10; i += 10) {
-                ctx.beginPath();
-                ctx.moveTo(i, y + 20);
-                ctx.lineTo(i, y + height - 20);
-                ctx.stroke();
-            }
+            // Beine
+            ctx.fillRect(x + width / 4, y + height * 3 / 4, width / 2, height / 2);
         }
 
         function createObstacle() {
@@ -127,10 +125,7 @@
 
             // Draw player
             ctx.fillStyle = player.color;
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.closePath();
-            ctx.fill();
+            ctx.fillRect(player.x, player.y, player.width, player.height);
 
             // Player gravity
             if (!player.grounded) {
@@ -139,29 +134,29 @@
             }
 
             // Prevent player from falling through the floor
-            if (player.y + player.radius >= canvasHeight) {
-                player.y = canvasHeight - player.radius;
+            if (player.y + player.height >= canvasHeight) {
+                player.y = canvasHeight - player.height;
                 player.grounded = true;
                 player.dy = 0;
             }
 
-            // Draw obstacles (Fußballtore) and move them
+            // Draw opponents and move them
             for (let i = 0; i < obstacles.length; i++) {
                 let obstacle = obstacles[i];
                 obstacle.x -= obstacleSpeed;
-                drawGoal(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                drawOpponent(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
                 // Check for collision
-                if (obstacle.x < player.x + player.radius && 
-                    obstacle.x + obstacle.width > player.x - player.radius &&
-                    obstacle.y < player.y + player.radius &&
-                    obstacle.y + obstacle.height > player.y - player.radius) {
+                if (obstacle.x < player.x + player.width && 
+                    obstacle.x + obstacle.width > player.x &&
+                    obstacle.y < player.y + player.height &&
+                    obstacle.y + obstacle.height > player.y) {
                     gameOver = true;
                     gameOverDiv.style.display = "block";
                     return;
                 }
 
-                // Remove off-screen obstacles
+                // Remove off-screen opponents
                 if (obstacle.x + obstacle.width < 0) {
                     obstacles.splice(i, 1);
                     i--;
@@ -198,7 +193,7 @@
         retryButton.addEventListener("click", function() {
             gameOver = false;
             gameOverDiv.style.display = "none";
-            player.y = canvasHeight - player.radius;
+            player.y = canvasHeight - player.height;
             player.dy = 0;
             obstacles = [];
             points = 0;
