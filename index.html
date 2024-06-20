@@ -220,6 +220,23 @@
             obstacleSpeed = 5;
             startGame();
         });
+
+        // Check for collision and show retry button
+        function checkCollision() {
+            for (let obstacle of obstacles) {
+                if (obstacle.x < player.x + player.radius && 
+                    obstacle.x + obstacle.width > player.x &&
+                    obstacle.y < player.y + player.radius &&
+                    obstacle.y + obstacle.height > player.y) {
+                    gameOver = true;
+                    gameOverDiv.style.display = "block";
+                    return;
+                }
+            }
+        }
+
+        // Check for collision every frame
+        setInterval(checkCollision, 1000 / 60);
     </script>
 </body>
 </html>
