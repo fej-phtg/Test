@@ -3,9 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Testseite</title>
+    <title>Jump and Run Spiel</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #282828;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <h1>Hallo Welt!</h1>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let canvasWidth = window.innerWidth;
+        let canvasHeight = window.innerHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+
+        let player = {
+            x: 50,
+            y: canvasHeight - 30,
+            width: 30,
+            height: 30,
+            color: "#AFCD98",
+            dy: 0,
+            gravity: 1,
+            jumpPower: -15,
+            grounded: true
+        };
+
+        let obstacles = [];
+        let obstacleWidth = 30;
+        let obstacleHeight = 30;
+        let obstacleColor = "#FFFFFF";
+        let obstacleSpeed = 5;
+
+        function createObstacle() {
+            let obstacle = {
+                x: canvasWidth,
+                y: canvasHeight - obstacleHeight,
+                width: obstacleWidth,
+                height: obstacleHeight
+            };
+            obstacles.push(obstacle);
+        }
+
+        let spawnInterval = 2000;
+        setInterval(createObstacle, spawnInterval);
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Draw player
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Player gravity
+            if (!player.grounded) {
+                player.dy += player.gravity;
+                player.y += player.dy;
+            }
+
+            // Prevent player from falling through the floor
+            if (player.y + player.height >= canvasHeight) {
+                player.y = canvasHeight - player.height;
+                player.grounded = true;
+                player.dy = 0;
+            }
+
+            // Draw obstacles and move them
+            for (let i = 0; i < obstacles.length; i++) {
+                let obstacle = obstacles[i];
+                obstacle.x -= obstacleSpeed;
+                ctx.fillStyle = obstacleColor;
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+                // Remove off-screen obstacles
+                if (obstacle.x + obstacle.width < 0) {
+                    obstacles.splice(i, 1);
+                    i--;
+                }
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener("keydown", function(e) {
+            if (e.code === "Space" && player.grounded) {
+                player.dy = player.jumpPower;
+                player.grounded = false;
+            }
+        });
+
+        gameLoop();
+    </script>
 </body>
 </html>
