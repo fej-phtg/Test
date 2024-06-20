@@ -8,40 +8,71 @@
         body {
             margin: 0;
             background-color: #282828;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            color: white;
         }
         canvas {
+            background-color: #282828;
             display: block;
+            border: 2px solid #FFFFFF;
+        }
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        #retryButton {
+            background-color: #FFFFFF;
+            color: #282828;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div id="gameOver">
+        <h1>Game Over</h1>
+        <button id="retryButton">Erneut versuchen</button>
+    </div>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
+        const gameOverDiv = document.getElementById("gameOver");
+        const retryButton = document.getElementById("retryButton");
 
-        let canvasWidth = window.innerWidth;
-        let canvasHeight = window.innerHeight;
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
+        let canvasWidth = canvas.width;
+        let canvasHeight = canvas.height;
 
         let player = {
             x: 50,
-            y: canvasHeight - 30,
-            width: 30,
-            height: 30,
+            y: canvasHeight - 100,
+            radius: 30, // Spielergröße als Radius für den Kreis
             color: "#AFCD98",
             dy: 0,
             gravity: 1,
-            jumpPower: -15,
+            jumpPower: -20,
             grounded: true
         };
 
         let obstacles = [];
-        let obstacleWidth = 30;
-        let obstacleHeight = 30;
+        let obstacleWidth = 50;
+        let obstacleHeight = 50;
         let obstacleColor = "#FFFFFF";
         let obstacleSpeed = 5;
+
+        let points = 0; // Punkteanzeige
+        let gameOver = false; // Spielzustand
 
         function createObstacle() {
             let obstacle = {
@@ -57,11 +88,29 @@
         setInterval(createObstacle, spawnInterval);
 
         function gameLoop() {
+            if (gameOver) return; // Beende das Spiel, wenn es vorbei ist
+
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-            // Draw player
+            // Punkteanzeige
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.fillText("Punkte: " + points, canvasWidth - 120, 30);
+
+            // Draw player (Fußball)
             ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Weiße Flecken für Fußball-Effekt
+            ctx.fillStyle = "#FFFFFF";
+            ctx.beginPath();
+            ctx.arc(player.x - 10, player.y - 10, 8, 0, Math.PI * 2);
+            ctx.arc(player.x + 10, player.y + 10, 5, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.fill();
 
             // Player gravity
             if (!player.grounded) {
@@ -70,8 +119,8 @@
             }
 
             // Prevent player from falling through the floor
-            if (player.y + player.height >= canvasHeight) {
-                player.y = canvasHeight - player.height;
+            if (player.y + player.radius >= canvasHeight) {
+                player.y = canvasHeight - player.radius;
                 player.grounded = true;
                 player.dy = 0;
             }
@@ -83,10 +132,20 @@
                 ctx.fillStyle = obstacleColor;
                 ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
+                // Check for collision
+                if (obstacle.x < player.x + player.radius && 
+                    obstacle.x + obstacle.width > player.x - player.radius &&
+                    obstacle.y < player.y + player.radius &&
+                    obstacle.y + obstacle.height > player.y - player.radius) {
+                    gameOver = true;
+                    gameOverDiv.style.display = "block";
+                }
+
                 // Remove off-screen obstacles
                 if (obstacle.x + obstacle.width < 0) {
                     obstacles.splice(i, 1);
                     i--;
+                    points++; // Punkt hinzufügen, wenn Hindernis geschafft
                 }
             }
 
@@ -94,14 +153,34 @@
         }
 
         window.addEventListener("keydown", function(e) {
-            if (e.code === "Space" && player.grounded) {
+            if (e.code === "Space" && player.grounded && !gameOver) {
                 player.dy = player.jumpPower;
                 player.grounded = false;
             }
+        });
+
+        // Fügt das Springen bei Mausklick hinzu
+        canvas.addEventListener("click", function(e) {
+            if (player.grounded && !gameOver) {
+                player.dy = player.jumpPower;
+                player.grounded = false;
+            }
+        });
+
+        // Spiel neu starten
+        retryButton.addEventListener("click", function() {
+            gameOver = false;
+            gameOverDiv.style.display = "none";
+            player.y = canvasHeight - player.radius;
+            player.dy = 0;
+            obstacles = [];
+            points = 0;
+            gameLoop();
         });
 
         gameLoop();
     </script>
 </body>
 </html>
+
 
