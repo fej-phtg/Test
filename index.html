@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jump and Run Spiel</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
+
         body {
             margin: 0;
             background-color: #282828;
@@ -13,7 +15,7 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
-            font-family: Arial, sans-serif;
+            font-family: 'Anton', sans-serif;
             color: white;
         }
         canvas {
@@ -21,13 +23,14 @@
             display: block;
             border: 2px solid #FFFFFF;
         }
-        #gameOver {
-            display: none;
+        #startScreen, #gameOver {
             position: absolute;
+            text-align: center;
+        }
+        #startScreen {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            text-align: center;
         }
         #retryButton {
             background-color: #FFFFFF;
@@ -41,13 +44,18 @@
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="400"></canvas>
-    <div id="gameOver">
+    <div id="startScreen">
+        <h1>Klicke auf den Bildschirm, um zu starten.</h1>
+        <p>Mit jedem Klick überspringst du ein Hindernis.</p>
+    </div>
+    <div id="gameOver" style="display: none;">
         <h1>Game Over</h1>
         <button id="retryButton">Erneut versuchen</button>
     </div>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
+        const startScreen = document.getElementById("startScreen");
         const gameOverDiv = document.getElementById("gameOver");
         const retryButton = document.getElementById("retryButton");
 
@@ -57,7 +65,7 @@
         let player = {
             x: 50,
             y: canvasHeight - 100,
-            radius: 30, // Spielergröße als Radius für den Kreis
+            radius: 30,
             color: "#AFCD98",
             dy: 0,
             gravity: 1,
@@ -70,9 +78,23 @@
         let obstacleHeight = 50;
         let obstacleColor = "#FFFFFF";
         let obstacleSpeed = 5;
+        let gameStarted = false; // Zum Starten des Spiels
+        let points = 0;
+        let gameOver = false;
 
-        let points = 0; // Punkteanzeige
-        let gameOver = false; // Spielzustand
+        function drawGoal(x, y, width, height) {
+            ctx.strokeStyle = obstacleColor;
+            ctx.lineWidth = 4;
+            ctx.strokeRect(x, y, width, height); // Rahmen des Tores
+            ctx.beginPath();
+            ctx.moveTo(x, y + height); // Netzeffekt
+            ctx.lineTo(x + width, y + height);
+            ctx.moveTo(x, y + height / 2);
+            ctx.lineTo(x + width, y + height / 2);
+            ctx.moveTo(x + width / 2, y);
+            ctx.lineTo(x + width / 2, y + height);
+            ctx.stroke();
+        }
 
         function createObstacle() {
             let obstacle = {
@@ -88,27 +110,19 @@
         setInterval(createObstacle, spawnInterval);
 
         function gameLoop() {
-            if (gameOver) return; // Beende das Spiel, wenn es vorbei ist
+            if (!gameStarted || gameOver) return; // Beende das Spiel, wenn es nicht gestartet oder vorbei ist
 
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
             // Punkteanzeige
             ctx.fillStyle = "white";
-            ctx.font = "20px Arial";
+            ctx.font = "20px 'Anton', sans-serif";
             ctx.fillText("Punkte: " + points, canvasWidth - 120, 30);
 
-            // Draw player (Fußball)
+            // Draw player
             ctx.fillStyle = player.color;
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.closePath();
-            ctx.fill();
-
-            // Weiße Flecken für Fußball-Effekt
-            ctx.fillStyle = "#FFFFFF";
-            ctx.beginPath();
-            ctx.arc(player.x - 10, player.y - 10, 8, 0, Math.PI * 2);
-            ctx.arc(player.x + 10, player.y + 10, 5, 0, Math.PI * 2);
             ctx.closePath();
             ctx.fill();
 
@@ -125,12 +139,11 @@
                 player.dy = 0;
             }
 
-            // Draw obstacles and move them
+            // Draw obstacles (Fußballtore) and move them
             for (let i = 0; i < obstacles.length; i++) {
                 let obstacle = obstacles[i];
                 obstacle.x -= obstacleSpeed;
-                ctx.fillStyle = obstacleColor;
-                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                drawGoal(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
                 // Check for collision
                 if (obstacle.x < player.x + player.radius && 
@@ -139,6 +152,7 @@
                     obstacle.y + obstacle.height > player.y - player.radius) {
                     gameOver = true;
                     gameOverDiv.style.display = "block";
+                    return;
                 }
 
                 // Remove off-screen obstacles
@@ -149,19 +163,26 @@
                 }
             }
 
+            // Spieltempo steigern
+            obstacleSpeed += 0.001;
+
             requestAnimationFrame(gameLoop);
         }
 
         window.addEventListener("keydown", function(e) {
-            if (e.code === "Space" && player.grounded && !gameOver) {
+            if (e.code === "Space" && player.grounded && gameStarted && !gameOver) {
                 player.dy = player.jumpPower;
                 player.grounded = false;
             }
         });
 
-        // Fügt das Springen bei Mausklick hinzu
-        canvas.addEventListener("click", function(e) {
-            if (player.grounded && !gameOver) {
+        // Start des Spiels bei Mausklick
+        canvas.addEventListener("click", function() {
+            if (!gameStarted) {
+                gameStarted = true;
+                startScreen.style.display = "none";
+                gameLoop();
+            } else if (player.grounded && !gameOver) {
                 player.dy = player.jumpPower;
                 player.grounded = false;
             }
@@ -175,10 +196,9 @@
             player.dy = 0;
             obstacles = [];
             points = 0;
+            obstacleSpeed = 5;
             gameLoop();
         });
-
-        gameLoop();
     </script>
 </body>
 </html>
