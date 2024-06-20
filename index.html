@@ -75,8 +75,8 @@
         };
 
         let obstacles = [];
-        let obstacleWidth = 50;
-        let obstacleHeight = 80; // Höhe der Gegenspieler
+        let obstacleWidth = 40;
+        let obstacleHeight = 100; // Höhe der Gegenspieler
         let obstacleColor = "#FFFFFF";
         let obstacleSpeed = 5;
         let gameStarted = false;
@@ -92,13 +92,14 @@
 
             // Körper
             ctx.fillStyle = obstacleColor;
-            ctx.fillRect(x, y + height / 4, width, height * 3 / 4);
+            ctx.fillRect(x + width / 3, y + height / 2, width / 3, height / 2);
 
             // Arme
-            ctx.fillRect(x - width / 4, y + height / 4, width / 2, height / 2);
+            ctx.fillRect(x, y + height / 2, width / 3, height / 3);
+            ctx.fillRect(x + 2 * width / 3, y + height / 2, width / 3, height / 3);
 
             // Beine
-            ctx.fillRect(x + width / 4, y + height * 3 / 4, width / 2, height / 2);
+            ctx.fillRect(x + width / 3, y + 3 * height / 4, width / 3, height / 4);
         }
 
         function createObstacle() {
@@ -112,12 +113,27 @@
         }
 
         let spawnInterval = 2000;
-        setInterval(createObstacle, spawnInterval);
+        let spawnTimer = null;
+
+        function startGame() {
+            gameStarted = true;
+            startScreen.style.display = "none";
+            spawnTimer = setInterval(createObstacle, spawnInterval);
+            gameLoop();
+        }
 
         function gameLoop() {
-            if (!gameStarted || gameOver) return;
-
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            if (gameOver) {
+                clearInterval(spawnTimer);
+                gameOverDiv.style.display = "block";
+                return;
+            }
+
+            if (!gameStarted) {
+                return;
+            }
 
             ctx.fillStyle = "white";
             ctx.font = "20px 'Anton', sans-serif";
@@ -152,7 +168,6 @@
                     obstacle.y < player.y + player.height &&
                     obstacle.y + obstacle.height > player.y) {
                     gameOver = true;
-                    gameOverDiv.style.display = "block";
                     return;
                 }
 
@@ -180,9 +195,7 @@
         // Start game on click
         canvas.addEventListener("click", function() {
             if (!gameStarted) {
-                gameStarted = true;
-                startScreen.style.display = "none";
-                gameLoop();
+                startGame();
             } else if (player.grounded && !gameOver) {
                 player.dy = player.jumpPower;
                 player.grounded = false;
@@ -198,7 +211,7 @@
             obstacles = [];
             points = 0;
             obstacleSpeed = 5;
-            gameLoop();
+            startGame();
         });
     </script>
 </body>
