@@ -83,10 +83,6 @@
         let points = 0;
         let gameOver = false;
 
-        // Anzahl der Hindernisse und ihr Abstand
-        let numObstacles = 5;
-        let obstacleGap = 300; // Abstand zwischen den Hindernissen
-
         function drawPlayer() {
             ctx.fillStyle = player.color;
             ctx.beginPath();
@@ -113,18 +109,14 @@
             ctx.fillRect(x + width / 3, y + 3 * height / 4, width / 3, height / 4);
         }
 
-        function createObstacles() {
-            obstacles = [];
-            let startX = canvasWidth;
-            for (let i = 0; i < numObstacles; i++) {
-                let obstacle = {
-                    x: startX + i * obstacleGap,
-                    y: canvasHeight - obstacleHeight,
-                    width: obstacleWidth,
-                    height: obstacleHeight
-                };
-                obstacles.push(obstacle);
-            }
+        function createObstacle() {
+            let obstacle = {
+                x: canvasWidth,
+                y: canvasHeight - obstacleHeight,
+                width: obstacleWidth,
+                height: obstacleHeight
+            };
+            obstacles.push(obstacle);
         }
 
         let spawnInterval = 2000;
@@ -133,7 +125,7 @@
         function startGame() {
             gameStarted = true;
             startScreen.style.display = "none";
-            createObstacles();
+            spawnTimer = setInterval(createObstacle, spawnInterval);
             gameLoop();
         }
 
@@ -141,6 +133,7 @@
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
             if (gameOver) {
+                clearInterval(spawnTimer);
                 gameOverDiv.style.display = "block";
                 return;
             }
@@ -176,7 +169,7 @@
                 drawOpponent(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
                 // Check for collision
-                if (obstacle.x < player.x + player.radius &&
+                if (obstacle.x < player.x + player.radius && 
                     obstacle.x + obstacle.width > player.x &&
                     obstacle.y < player.y + player.radius &&
                     obstacle.y + obstacle.height > player.y) {
@@ -187,10 +180,14 @@
 
                 // Remove off-screen opponents
                 if (obstacle.x + obstacle.width < 0) {
-                    obstacle.x = obstacles[obstacles.length - 1].x + obstacleGap;
+                    obstacles.splice(i, 1);
+                    i--;
                     points++;
                 }
             }
+
+            // Increase obstacle speed gradually
+            obstacleSpeed += 0.001;
 
             requestAnimationFrame(gameLoop);
         }
@@ -218,15 +215,16 @@
             gameOverDiv.style.display = "none";
             player.y = canvasHeight - player.radius;
             player.dy = 0;
+            obstacles = [];
             points = 0;
-            createObstacles(); // Hindernisse neu erstellen
-            obstacleSpeed = 5; // Geschwindigkeit zurücksetzen
+            obstacleSpeed = 5; // Zurücksetzen der Geschwindigkeit auf den Ausgangswert
+            startGame(); // Spiel neu starten
         });
 
         // Check for collision and show retry button
         function checkCollision() {
             for (let obstacle of obstacles) {
-                if (obstacle.x < player.x + player.radius &&
+                if (obstacle.x < player.x + player.radius && 
                     obstacle.x + obstacle.width > player.x &&
                     obstacle.y < player.y + player.radius &&
                     obstacle.y + obstacle.height > player.y) {
@@ -235,4 +233,10 @@
                     return;
                 }
             }
- 
+        }
+
+        // Check for collision every frame
+        setInterval(checkCollision, 1000 / 60);
+    </script>
+</body>
+</html>
