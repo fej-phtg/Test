@@ -19,15 +19,20 @@
             color: white;
         }
         canvas {
-            background-color: #282828;
+            background-color: #000000;
             display: block;
-            border: 2px solid #FFFFFF;
+            border: 1px solid #FFFFFF;
         }
         #startScreen, #gameOver {
             position: absolute;
             text-align: center;
         }
         #startScreen {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #gameOver {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -40,6 +45,7 @@
             cursor: pointer;
             font-size: 16px;
             font-family: 'Anton', sans-serif;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -75,8 +81,8 @@
         };
 
         let obstacles = [];
-        let obstacleWidth = 40;
-        let obstacleHeight = 80; // Höhe der Figuren
+        let obstacleWidth = 20;
+        let obstacleHeight = 60; // Höhe der Strichmännchen
         let obstacleSpeed = 5;
         let gameStarted = false;
         let points = 0;
@@ -89,24 +95,40 @@
             ctx.fill();
         }
 
-        function drawFigure(x, y, width, height) {
+        function drawStickFigure(x, y, width, height) {
             // Kopf
             ctx.fillStyle = "#FFFFFF";
             ctx.beginPath();
-            ctx.arc(x + width / 2, y + height / 5, width / 5, 0, Math.PI * 2);
+            ctx.arc(x + width / 2, y + width / 2, width / 2, 0, Math.PI * 2);
             ctx.fill();
 
             // Körper
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fillRect(x + width / 3, y + height / 5, width / 3, height / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + width / 2, y + width);
+            ctx.lineTo(x + width / 2, y + 2 * height / 3);
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.lineWidth = 3;
+            ctx.stroke();
 
             // Arme
-            ctx.fillRect(x, y + height / 5, width / 3, height / 5);
-            ctx.fillRect(x + 2 * width / 3, y + height / 5, width / 3, height / 5);
+            ctx.beginPath();
+            ctx.moveTo(x + width / 2, y + height / 2);
+            ctx.lineTo(x, y + height / 3);
+            ctx.moveTo(x + width / 2, y + height / 2);
+            ctx.lineTo(x + width, y + height / 3);
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.lineWidth = 3;
+            ctx.stroke();
 
             // Beine
-            ctx.fillRect(x + width / 3, y + 3 * height / 5, width / 6, height / 3);
-            ctx.fillRect(x + width / 2, y + 3 * height / 5, width / 6, height / 3);
+            ctx.beginPath();
+            ctx.moveTo(x + width / 2, y + 2 * height / 3);
+            ctx.lineTo(x, y + height);
+            ctx.moveTo(x + width / 2, y + 2 * height / 3);
+            ctx.lineTo(x + width, y + height);
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.lineWidth = 3;
+            ctx.stroke();
         }
 
         function createObstacle() {
@@ -178,7 +200,7 @@
             for (let i = 0; i < obstacles.length; i++) {
                 let obstacle = obstacles[i];
                 obstacle.x -= obstacleSpeed;
-                drawFigure(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                drawStickFigure(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
                 // Check for collision
                 if (obstacle.x < player.x + player.radius && 
