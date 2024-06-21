@@ -19,14 +19,13 @@
             color: white;
         }
         canvas {
-            background-color: #000000;
+            background-color: #282828;
             display: block;
-            border: 1px solid #FFFFFF;
+            border: 2px solid #FFFFFF;
         }
         #startScreen, #gameOver {
             position: absolute;
             text-align: center;
-            display: none; /* initially hidden */
         }
         #startScreen {
             top: 50%;
@@ -56,7 +55,7 @@
         <h1>Klicke auf den Bildschirm, um zu starten.</h1>
         <p>Mit jedem Klick umdribbelst du einen Gegenspieler.</p>
     </div>
-    <div id="gameOver">
+    <div id="gameOver" style="display: none;">
         <h1>Ballverlust, düdüm</h1>
         <button id="retryButton">nochmal</button>
     </div>
@@ -82,10 +81,9 @@
         };
 
         let obstacles = [];
-        let obstacleWidth = 30;
-        let obstacleHeight = 90; // Höhe der Strichmännchen
-        let obstacleSpeed = 5; // Startgeschwindigkeit der Hindernisse
-        let obstacleSpeedIncrement = 0.5; // Erhöhung der Geschwindigkeit pro Frame
+        let obstacleWidth = 20;
+        let obstacleHeight = 60; // Höhe der Strichmännchen
+        let obstacleSpeed = 5;
         let gameStarted = false;
         let points = 0;
         let gameOver = false;
@@ -174,9 +172,6 @@
             if (gameOver) {
                 clearInterval(spawnTimer);
                 gameOverDiv.style.display = "block";
-                ctx.fillStyle = "white";
-                ctx.font = "20px 'Anton', sans-serif";
-                ctx.fillText("Ballverlust, düdüm", canvasWidth / 2 - 100, canvasHeight / 2 + 50);
                 return;
             }
 
@@ -227,8 +222,8 @@
                 }
             }
 
-            // Geschwindigkeit der Hindernisse erhöhen
-            obstacleSpeed += obstacleSpeedIncrement;
+            // Geschwindigkeit der Hindernisse zurücksetzen, um Konsistenz zu gewährleisten
+            obstacleSpeed = 5;
 
             requestAnimationFrame(gameLoop);
         }
@@ -257,4 +252,5 @@
     </script>
 </body>
 </html>
+
 
