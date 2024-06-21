@@ -89,15 +89,22 @@
             ctx.fill();
         }
 
-        function drawOpponent(x, y, width, height) {
-            // Zeichnen des äußeren weißen Quadrats
+        function drawLogoObstacle(x, y, width, height) {
+            // Hintergrund Quadrat
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(x, y, width, height);
 
-            // Zeichnen des grünen Kreises in der Mitte
+            // Interne weiße Balken (um das T und das umgekehrte T zu formen)
+            ctx.fillStyle = "#282828";
+            ctx.fillRect(x + width * 0.25, y + height * 0.25, width * 0.1, height * 0.5); // Vertikaler Balken T
+            ctx.fillRect(x + width * 0.35, y + height * 0.35, width * 0.3, height * 0.1); // Horizontaler Balken T
+            ctx.fillRect(x + width * 0.65, y + height * 0.65, width * 0.1, height * 0.1); // Horizontaler Balken umgekehrtes T
+            ctx.fillRect(x + width * 0.65, y + height * 0.35, width * 0.1, height * 0.3); // Vertikaler Balken umgekehrtes T
+
+            // Interner grüner Kreis
             ctx.fillStyle = "#AFCD98";
             ctx.beginPath();
-            ctx.arc(x + width / 2, y + height / 2, width / 3, 0, Math.PI * 2);
+            ctx.arc(x + width * 0.67, y + height * 0.33, width * 0.2, 0, Math.PI * 2);
             ctx.fill();
         }
 
@@ -166,7 +173,7 @@
             for (let i = 0; i < obstacles.length; i++) {
                 let obstacle = obstacles[i];
                 obstacle.x -= obstacleSpeed;
-                drawOpponent(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                drawLogoObstacle(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
                 // Check for collision
                 if (obstacle.x < player.x + player.radius && 
