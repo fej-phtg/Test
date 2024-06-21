@@ -19,9 +19,9 @@
             color: white;
         }
         canvas {
-            background-color: #282828;
+            background-color: #000000;
             display: block;
-            border: 2px solid #FFFFFF;
+            border: 1px solid #FFFFFF;
         }
         #startScreen, #gameOver {
             position: absolute;
@@ -91,21 +91,38 @@
 
         function drawLogoObstacle(x, y, width, height) {
             // Hintergrund Quadrat
-            ctx.fillStyle = "#FFFFFF";
+            ctx.fillStyle = "#282828";
             ctx.fillRect(x, y, width, height);
 
-            // Interne weiße Balken (um das T und das umgekehrte T zu formen)
-            ctx.fillStyle = "#282828";
-            ctx.fillRect(x + width * 0.25, y + height * 0.25, width * 0.1, height * 0.5); // Vertikaler Balken T
-            ctx.fillRect(x + width * 0.35, y + height * 0.35, width * 0.3, height * 0.1); // Horizontaler Balken T
-            ctx.fillRect(x + width * 0.65, y + height * 0.65, width * 0.1, height * 0.1); // Horizontaler Balken umgekehrtes T
-            ctx.fillRect(x + width * 0.65, y + height * 0.35, width * 0.1, height * 0.3); // Vertikaler Balken umgekehrtes T
+            // Externer weißer Rahmen
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.lineWidth = width / 8;
+            ctx.strokeRect(x, y, width, height);
 
             // Interner grüner Kreis
+            let circleRadius = width / 4;
+            let circleX = x + width - circleRadius * 1.5;
+            let circleY = y + circleRadius * 1.5;
             ctx.fillStyle = "#AFCD98";
             ctx.beginPath();
-            ctx.arc(x + width * 0.67, y + height * 0.33, width * 0.2, 0, Math.PI * 2);
+            ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
             ctx.fill();
+
+            // Interne weiße Balken
+            ctx.fillStyle = "#FFFFFF";
+            let lineThickness = width / 10;
+            // Vertikale Balken
+            ctx.fillRect(x + width / 5, y, lineThickness, height); // Linker Balken
+            ctx.fillRect(x + width - width / 5 - lineThickness, y, lineThickness, height); // Rechter Balken
+            // Horizontale Balken
+            ctx.fillRect(x, y + height / 2 - lineThickness / 2, width, lineThickness); // Mittlerer horizontaler Balken
+
+            // Zusätzliche Formen für präzise Details
+            ctx.fillStyle = "#282828";
+            // Linker unterer Bereich ausfüllen
+            ctx.fillRect(x + width / 5, y + height / 2, width / 5, height / 2);
+            // Rechter oberer Bereich ausfüllen
+            ctx.fillRect(x + width - width / 5 * 2, y, width / 5, height / 2);
         }
 
         function createObstacle() {
