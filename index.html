@@ -1,254 +1,195 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jump and Run Spiel</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const startScreen = document.getElementById("startScreen");
+    const gameOverDiv = document.getElementById("gameOver");
+    const retryButton = document.getElementById("retryButton");
 
-        body {
-            margin: 0;
-            background-color: #282828;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Anton', sans-serif;
-            color: white;
-        }
-        canvas {
-            background-color: #000000;
-            display: block;
-            border: 1px solid #FFFFFF;
-        }
-        #startScreen, #gameOver {
-            position: absolute;
-            text-align: center;
-        }
-        #startScreen {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        #gameOver {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        #retryButton {
-            background-color: #FFFFFF;
-            color: #282828;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 16px;
-            font-family: 'Anton', sans-serif;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
-    <div id="startScreen">
-        <h1>Klicke auf den Bildschirm, um zu starten.</h1>
-        <p>Mit jedem Klick umdribbelst du einen Gegenspieler.</p>
-    </div>
-    <div id="gameOver" style="display: none;">
-        <h1>Ballverlust, düdüm</h1>
-        <button id="retryButton">nochmal</button>
-    </div>
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const startScreen = document.getElementById("startScreen");
-        const gameOverDiv = document.getElementById("gameOver");
-        const retryButton = document.getElementById("retryButton");
+    let canvasWidth = canvas.width;
+    let canvasHeight = canvas.height;
 
-        let canvasWidth = canvas.width;
-        let canvasHeight = canvas.height;
+    let player = {
+        x: 50,
+        y: canvasHeight - 100,
+        radius: 20,
+        color: "#AFCD98",
+        dy: 0,
+        gravity: 1,
+        jumpPower: -20,
+        grounded: true
+    };
 
-        let player = {
-            x: 50,
-            y: canvasHeight - 100,
-            radius: 20,
-            color: "#AFCD98",
-            dy: 0,
-            gravity: 1,
-            jumpPower: -20,
-            grounded: true
+    let obstacles = [];
+    let obstacleWidth = 30;
+    let obstacleHeight = 90; // Höhe der Strichmännchen
+    let obstacleSpeed = 5; // Startgeschwindigkeit der Hindernisse
+    let obstacleSpeedIncrement = 0.5; // Erhöhung der Geschwindigkeit pro Frame
+    let gameStarted = false;
+    let points = 0;
+    let gameOver = false;
+
+    function drawPlayer() {
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawStickFigure(x, y, width, height) {
+        // Kopf
+        ctx.fillStyle = "#FFFFFF";
+        ctx.beginPath();
+        ctx.arc(x + width / 2, y + width / 2, width / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Körper
+        ctx.beginPath();
+        ctx.moveTo(x + width / 2, y + width);
+        ctx.lineTo(x + width / 2, y + 2 * height / 3);
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Arme
+        ctx.beginPath();
+        ctx.moveTo(x + width / 2, y + height / 2);
+        ctx.lineTo(x, y + height / 3);
+        ctx.moveTo(x + width / 2, y + height / 2);
+        ctx.lineTo(x + width, y + height / 3);
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Beine
+        ctx.beginPath();
+        ctx.moveTo(x + width / 2, y + 2 * height / 3);
+        ctx.lineTo(x, y + height);
+        ctx.moveTo(x + width / 2, y + 2 * height / 3);
+        ctx.lineTo(x + width, y + height);
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    }
+
+    function createObstacle() {
+        let obstacle = {
+            x: canvasWidth,
+            y: canvasHeight - obstacleHeight,
+            width: obstacleWidth,
+            height: obstacleHeight
         };
+        obstacles.push(obstacle);
+    }
 
-        let obstacles = [];
-        let obstacleWidth = 30;
-        let obstacleHeight = 90; // Höhe der Strichmännchen
-        let obstacleSpeed = 10;
-        let gameStarted = false;
-        let points = 0;
-        let gameOver = false;
+    let spawnInterval = 2000; // Abstand zwischen Hindernissen
+    let spawnTimer = null;
 
-        function drawPlayer() {
-            ctx.fillStyle = player.color;
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
+    function resetGame() {
+        player.y = canvasHeight - player.radius;
+        player.dy = 0;
+        obstacles = [];
+        points = 0;
+        obstacleSpeed = 5;
+        gameOver = false;
+        gameStarted = true;
+        startScreen.style.display = "none";
+        gameOverDiv.style.display = "none";
+        spawnTimer = setInterval(createObstacle, spawnInterval); // Hindernisse alle 2 Sekunden erstellen
+        gameLoop();
+    }
 
-        function drawStickFigure(x, y, width, height) {
-            // Kopf
-            ctx.fillStyle = "#FFFFFF";
-            ctx.beginPath();
-            ctx.arc(x + width / 2, y + width / 2, width / 2, 0, Math.PI * 2);
-            ctx.fill();
+    function startGame() {
+        gameStarted = true;
+        startScreen.style.display = "none";
+        gameOverDiv.style.display = "none";
+        spawnTimer = setInterval(createObstacle, spawnInterval); // Hindernisse alle 2 Sekunden erstellen
+        gameLoop();
+    }
 
-            // Körper
-            ctx.beginPath();
-            ctx.moveTo(x + width / 2, y + width);
-            ctx.lineTo(x + width / 2, y + 2 * height / 3);
-            ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = 3;
-            ctx.stroke();
+    function gameLoop() {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-            // Arme
-            ctx.beginPath();
-            ctx.moveTo(x + width / 2, y + height / 2);
-            ctx.lineTo(x, y + height / 3);
-            ctx.moveTo(x + width / 2, y + height / 2);
-            ctx.lineTo(x + width, y + height / 3);
-            ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // Beine
-            ctx.beginPath();
-            ctx.moveTo(x + width / 2, y + 2 * height / 3);
-            ctx.lineTo(x, y + height);
-            ctx.moveTo(x + width / 2, y + 2 * height / 3);
-            ctx.lineTo(x + width, y + height);
-            ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = 3;
-            ctx.stroke();
-        }
-
-        function createObstacle() {
-            let obstacle = {
-                x: canvasWidth,
-                y: canvasHeight - obstacleHeight,
-                width: obstacleWidth,
-                height: obstacleHeight
-            };
-            obstacles.push(obstacle);
-        }
-
-        let spawnInterval = 2000; // Abstand zwischen Hindernissen
-        let spawnTimer = null;
-
-        function resetGame() {
-            player.y = canvasHeight - player.radius;
-            player.dy = 0;
-            obstacles = [];
-            points = 0;
-            obstacleSpeed = 5;
-            gameOver = false;
-            gameStarted = true;
-            startScreen.style.display = "none";
-            gameOverDiv.style.display = "none";
-            spawnTimer = setInterval(createObstacle, spawnInterval); // Hindernisse alle 2 Sekunden erstellen
-            gameLoop();
-        }
-
-        function startGame() {
-            gameStarted = true;
-            startScreen.style.display = "none";
-            gameOverDiv.style.display = "none";
-            spawnTimer = setInterval(createObstacle, spawnInterval); // Hindernisse alle 2 Sekunden erstellen
-            gameLoop();
-        }
-
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-            if (gameOver) {
-                clearInterval(spawnTimer);
-                gameOverDiv.style.display = "block";
-                return;
-            }
-
-            if (!gameStarted) {
-                return;
-            }
-
+        if (gameOver) {
+            clearInterval(spawnTimer);
+            gameOverDiv.style.display = "block";
             ctx.fillStyle = "white";
             ctx.font = "20px 'Anton', sans-serif";
-            ctx.fillText("Punkte: " + points, canvasWidth - 120, 30);
-
-            // Spieler zeichnen
-            drawPlayer();
-
-            // Spieler-Schwerkraft
-            if (!player.grounded) {
-                player.dy += player.gravity;
-                player.y += player.dy;
-            }
-
-            // Spieler am Boden halten
-            if (player.y + player.radius >= canvasHeight) {
-                player.y = canvasHeight - player.radius;
-                player.grounded = true;
-                player.dy = 0;
-            }
-
-            // Hindernisse zeichnen und bewegen
-            for (let i = 0; i < obstacles.length; i++) {
-                let obstacle = obstacles[i];
-                obstacle.x -= obstacleSpeed;
-                drawStickFigure(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-
-                // Kollision überprüfen
-                if (obstacle.x < player.x + player.radius && 
-                    obstacle.x + obstacle.width > player.x &&
-                    obstacle.y < player.y + player.radius &&
-                    obstacle.y + obstacle.height > player.y) {
-                    gameOver = true;
-                    return;
-                }
-
-                // Hindernisse außerhalb des Bildschirms entfernen
-                if (obstacle.x + obstacle.width < 0) {
-                    obstacles.splice(i, 1);
-                    i--;
-                    points++;
-                }
-            }
-
-            // Geschwindigkeit der Hindernisse zurücksetzen, um Konsistenz zu gewährleisten
-            obstacleSpeed = 5;
-
-            requestAnimationFrame(gameLoop);
+            ctx.fillText("Ballverlust, düdüm", canvasWidth / 2 - 100, canvasHeight / 2 + 50);
+            return;
         }
 
-        window.addEventListener("keydown", function(e) {
-            if (e.code === "Space" && player.grounded && gameStarted && !gameOver) {
-                player.dy = player.jumpPower;
-                player.grounded = false;
-            }
-        });
+        if (!gameStarted) {
+            return;
+        }
 
-        // Spiel starten bei Klick
-        canvas.addEventListener("click", function() {
-            if (!gameStarted) {
-                startGame();
-            } else if (player.grounded && !gameOver) {
-                player.dy = player.jumpPower;
-                player.grounded = false;
-            }
-        });
+        ctx.fillStyle = "white";
+        ctx.font = "20px 'Anton', sans-serif";
+        ctx.fillText("Punkte: " + points, canvasWidth - 120, 30);
 
-        // Event-Handler für den Neustart-Button
-        retryButton.addEventListener("click", function() {
-            resetGame();
-        });
-    </script>
-</body>
-</html>
+        // Spieler zeichnen
+        drawPlayer();
+
+        // Spieler-Schwerkraft
+        if (!player.grounded) {
+            player.dy += player.gravity;
+            player.y += player.dy;
+        }
+
+        // Spieler am Boden halten
+        if (player.y + player.radius >= canvasHeight) {
+            player.y = canvasHeight - player.radius;
+            player.grounded = true;
+            player.dy = 0;
+        }
+
+        // Hindernisse zeichnen und bewegen
+        for (let i = 0; i < obstacles.length; i++) {
+            let obstacle = obstacles[i];
+            obstacle.x -= obstacleSpeed;
+            drawStickFigure(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+            // Kollision überprüfen
+            if (obstacle.x < player.x + player.radius && 
+                obstacle.x + obstacle.width > player.x &&
+                obstacle.y < player.y + player.radius &&
+                obstacle.y + obstacle.height > player.y) {
+                gameOver = true;
+                return;
+            }
+
+            // Hindernisse außerhalb des Bildschirms entfernen
+            if (obstacle.x + obstacle.width < 0) {
+                obstacles.splice(i, 1);
+                i--;
+                points++;
+            }
+        }
+
+        // Geschwindigkeit der Hindernisse erhöhen
+        obstacleSpeed += obstacleSpeedIncrement;
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    window.addEventListener("keydown", function(e) {
+        if (e.code === "Space" && player.grounded && gameStarted && !gameOver) {
+            player.dy = player.jumpPower;
+            player.grounded = false;
+        }
+    });
+
+    // Spiel starten bei Klick
+    canvas.addEventListener("click", function() {
+        if (!gameStarted) {
+            startGame();
+        } else if (player.grounded && !gameOver) {
+            player.dy = player.jumpPower;
+            player.grounded = false;
+        }
+    });
+
+    // Event-Handler für den Neustart-Button
+    retryButton.addEventListener("click", function() {
+        resetGame();
+    });
+</script>
