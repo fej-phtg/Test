@@ -75,13 +75,19 @@
         };
 
         let obstacles = [];
-        let obstacleWidth = 40;
-        let obstacleHeight = 100; // Höhe der Gegenspieler
-        let obstacleColor = "#FFFFFF";
+        let obstacleWidth = 60;
+        let obstacleHeight = 60; // Höhe der Logos
         let obstacleSpeed = 5;
         let gameStarted = false;
         let points = 0;
         let gameOver = false;
+
+        // Laden des Hindernis-Logos
+        let obstacleImage = new Image();
+        obstacleImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAFf0lEQVR4nO2de2wUVRTHfzxzyZ5Ox6UUjY4gbcAJRUSKGCIgiCGtSlIqEoICN8MIlaIKJIAIYr4UAe5EqL5AhFNCCIAAVqQkwtxYqqLVAyQqYNNSCxOY2d4a3dX8NyZl5zvnfPm3MmdmVwH1/T393nnP8/Oe997rd1/0H7eO9ShhBBCCCGEEkI4t1oWZ1sVAGNeR9dy1ZBbAv4CJHH9glJr0XTY+IKZDBF0eQdxGV/0AJRvc+LDIpu0z5guEVUSI3F3WtRPscjLgZLHVyJmUPaxWtYPBp8hh+QvVCdBL5Z3yE/FmVOM8LZoWqRuMGRiGhKxNZrCe4b+KxCv/UTuT/yfj/7ZqQhBDPNm9eYJ9VVvF5WnPHipF4Dzr5ZykVSM/VXX5v65WpgbQWmCEn++8BchE+0dNAb9VbR1MfRzSM1cl1Htmfqcrz0gvghIfmPA57o3BZyEzO9oWrP7y/yOhfAcLe5gqW73BtS1NeXAX+/Ax78bKoQSU0xO7KlA5xdntbVRdiqAlBZe1il6vc3xEwiufRUv8Wm/GtJdWTFzDa33T3oP2vjHkY3u/zAWkKCVJg/5Qb8XTnHrtdcs/f2jrMZj25UelF5N/EuXQ/kvLaJZTYhl9FGr09U1eysmCzfwQxrXL9YgrupYQzj1WbpADjMtVTV+qPaNnGxXbZrYpbcP3mXzQJ3bpgNOBVGbX6qNrsrf42aIFPOFwdnaerWv9wRP7lgMwFTx3DFu1yHf12XQfmXRE/bTOQj7wrwIlo87BDO5VPbJzYpYNfDlUZX0eLOAzJfJz+ER7tPgsOHXzXfM1uTgbVrtfOdj4y1EjUw5uRY1UhvJOLdZkvAZkbO24Pf4wIb8H7StGHGbmQw7wMmr7WyS0HehTxMXyp4JShXzdVOXatfaZa2u3mUL60ysrGfN3u8T0IptmflqXcfFfXZ5S/P6ddXZ4XodI0Fc7AkA2zM9TXacScX7NxdP5IIt1hXjPr2TZ8xvDymbUxn7TlD0FJwLDPAX5PG4MNRrc5XDA9URbZpBN9n48fPLNqGjjXUwE8n2ZskhxEu7sa5pQ9DS9yZNWVbq5NcXwYtjVTvnM7Q/JJhxWeqZSYhxHnNvm3mK/zsCpov7H/cMe1bLZ5yb5MjNqI4hglUNrdT7HpDSa/nSfnOdnE1otLJ36lF8j9OmfX2pXxqCTf2qF+WZxHkpOXYyzaRdFQ7wMauZWH/bijOljP02b9gh5vTeWqdDdqb5MFWOhbzJWExU9x5Ak4YRaSh97iRO4/3RaP6chUjN7taWoe82mJOh10C1FztimK1YpgX/qR7rBxfO8HzoyM4En2WtfwlnpyZZ9U3ytU7v9E+0W8GfFqKluSot3T12WaB1Xg5TK6eX9X6kS/mM6eJ53TjdRQdl9cPmyO5xIZ9msPmnMlyuE/9tPj92Ezr8XGrd+CVBhsar2ml7FV40bmMBay8Vrdgfq92eMrJ5EJpNmZ0ybw92XOHxR3DptPhm7twGvP8Ft+fhGZ+/guVTVyefmWbRk7Gbu7wPaTZ8Np1PXyt1i56c/DZsyHd2+Kp24dFc88RmzHL9snXb9SO60Snfe6Dpg8lWdZre9bVnUfGdLv2uhZvOdj4+3DWmbl2avbWvCw3r8B1s/UN09phAyCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADg6/9A37XHgS1d0ZJAAAAAElFTkSuQmCC";
+
+        let spawnInterval = 2000;
+        let spawnTimer = null;
 
         function drawPlayer() {
             ctx.fillStyle = player.color;
@@ -91,22 +97,8 @@
         }
 
         function drawOpponent(x, y, width, height) {
-            // Kopf
-            ctx.fillStyle = "#FFFFFF";
-            ctx.beginPath();
-            ctx.arc(x + width / 2, y + height / 4, height / 4, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Körper
-            ctx.fillStyle = obstacleColor;
-            ctx.fillRect(x + width / 3, y + height / 2, width / 3, height / 2);
-
-            // Arme
-            ctx.fillRect(x, y + height / 2, width / 3, height / 3);
-            ctx.fillRect(x + 2 * width / 3, y + height / 2, width / 3, height / 3);
-
-            // Beine
-            ctx.fillRect(x + width / 3, y + 3 * height / 4, width / 3, height / 4);
+            // Zeichne das Logo anstelle des ursprünglichen Hindernisses
+            ctx.drawImage(obstacleImage, x, y, width, height);
         }
 
         function createObstacle() {
@@ -119,12 +111,20 @@
             obstacles.push(obstacle);
         }
 
-        let spawnInterval = 2000;
-        let spawnTimer = null;
+        function resetGame() {
+            player.y = canvasHeight - player.radius;
+            player.dy = 0;
+            obstacles = [];
+            points = 0;
+            obstacleSpeed = 5;
+            gameOver = false;
+            startGame();
+        }
 
         function startGame() {
             gameStarted = true;
             startScreen.style.display = "none";
+            gameOverDiv.style.display = "none";
             spawnTimer = setInterval(createObstacle, spawnInterval);
             gameLoop();
         }
@@ -174,7 +174,6 @@
                     obstacle.y < player.y + player.radius &&
                     obstacle.y + obstacle.height > player.y) {
                     gameOver = true;
-                    gameOverDiv.style.display = "block";
                     return;
                 }
 
@@ -211,32 +210,8 @@
 
         // Retry button click handler
         retryButton.addEventListener("click", function() {
-            gameOver = false;
-            gameOverDiv.style.display = "none";
-            player.y = canvasHeight - player.radius;
-            player.dy = 0;
-            obstacles = [];
-            points = 0;
-            obstacleSpeed = 5; // Zurücksetzen der Geschwindigkeit auf den Ausgangswert
-            startGame(); // Spiel neu starten
+            resetGame();
         });
-
-        // Check for collision and show retry button
-        function checkCollision() {
-            for (let obstacle of obstacles) {
-                if (obstacle.x < player.x + player.radius && 
-                    obstacle.x + obstacle.width > player.x &&
-                    obstacle.y < player.y + player.radius &&
-                    obstacle.y + obstacle.height > player.y) {
-                    gameOver = true;
-                    gameOverDiv.style.display = "block";
-                    return;
-                }
-            }
-        }
-
-        // Check for collision every frame
-        setInterval(checkCollision, 1000 / 60);
     </script>
 </body>
 </html>
